@@ -1,0 +1,55 @@
+[project]
+name = "fauxdantic"
+version = "0.1.0"
+description = "A library for generating fake Pydantic models"
+authors = [
+    {name = "Your Name",email = "your.email@example.com"}
+]
+readme = "README.md"
+requires-python = "^3.9"
+dependencies = [
+    "pydantic (>=2.11.3,<3.0.0)",
+    "faker (>=37.1.0,<38.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "fauxdantic"
+version = "0.1.0"
+description = "A library for generating fake Pydantic models"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [{include = "fauxdantic", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pydantic = "^2.11.3"
+faker = "^37.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+pytest-asyncio = "^0.26.0"
+black = "^25.1.0"
+isort = "^6.0.1"
+mypy = "^1.15.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
