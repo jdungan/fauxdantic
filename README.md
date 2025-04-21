@@ -1,6 +1,6 @@
 # Fauxdantic
 
-A library for generating fake Pydantic models for testing and development purposes. Fauxdantic makes it easy to create realistic test data for your Pydantic models.
+A library for generating fake Pydantic models for testing. Fauxdantic makes it easy to create realistic test data for your Pydantic models.  Pairs well with testing of fastapi endpoints.
 
 ## Installation
 
