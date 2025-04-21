@@ -38,7 +38,7 @@ def _faux_value(field_type: Any, field_name: str = "") -> Any:
     # Handle List types
     if origin is list:
         item_type = args[0] if args else Any
-        return [_faux_value(item_type, field_name) for _ in range(2)]
+        return [_faux_value(item_type, field_name) for _ in range(random.randint(1, 3))]
 
     # Handle Dict types
     if origin is dict:
@@ -46,7 +46,7 @@ def _faux_value(field_type: Any, field_name: str = "") -> Any:
         value_type = args[1] if len(args) > 1 else Any
         return {
             _faux_value(key_type, f"{field_name}_key"): _faux_value(value_type, f"{field_name}_value")
-            for _ in range(2)
+            for _ in range(random.randint(1, 3))
         }
 
     # Handle basic types
@@ -56,11 +56,26 @@ def _faux_value(field_type: Any, field_name: str = "") -> Any:
         elif issubclass(field_type, Enum):
             return random.choice(list(field_type.__members__.values()))
         elif field_type is str:
-            if "email" in field_name.lower():
+            field_name_lower = field_name.lower()
+            if "email" in field_name_lower:
                 return faker.email()
-            elif "name" in field_name.lower():
+            elif "name" in field_name_lower:
                 return faker.name()
-            return faker.word()
+            elif "street" in field_name_lower:
+                return faker.street_address()
+            elif "city" in field_name_lower:
+                return faker.city()
+            elif "state" in field_name_lower:
+                return faker.state()
+            elif "zip" in field_name_lower or "postal" in field_name_lower:
+                return faker.postcode()
+            elif "phone" in field_name_lower:
+                return faker.phone_number()
+            elif "url" in field_name_lower:
+                return faker.url()
+            elif "description" in field_name_lower:
+                return faker.text(max_nb_chars=200)
+            return faker.sentence(nb_words=3)
         elif field_type is int:
             return faker.random_int(min=0, max=100)
         elif field_type is float:
@@ -70,9 +85,9 @@ def _faux_value(field_type: Any, field_name: str = "") -> Any:
         elif field_type is datetime:
             return faker.date_time()
         elif field_type is date:
-            return faker.date()
-        elif field_type is uuid.UUID:
-            return faker.uuid4()
+            return date.fromisoformat(faker.date())
+        elif field_type is uuid.UUID or field_type is UUID4:
+            return uuid.UUID(faker.uuid4())
 
     # Handle FieldInfo objects
     if isinstance(field_type, FieldInfo):
