@@ -109,8 +109,8 @@ def _faux_value(field_type: Any, field_name: str = "") -> Any:
     return faker.word()
 
 
-def faux_dict(model: Type[BaseModel], **kwargs) -> Dict:
-    model_values = {}
+def faux_dict(model: Type[BaseModel], **kwargs: Any) -> Dict[str, Any]:
+    model_values: Dict[str, Any] = {}
 
     for name, field in model.model_fields.items():
         if name in kwargs:
@@ -132,5 +132,5 @@ def faux_dict(model: Type[BaseModel], **kwargs) -> Dict:
 Model = TypeVar("Model", bound=BaseModel)
 
 
-def faux(pydantic_model: Type[Model], **kwargs) -> Model:
+def faux(pydantic_model: Type[Model], **kwargs: Any) -> Model:
     return pydantic_model(**faux_dict(pydantic_model, **kwargs))

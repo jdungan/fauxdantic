@@ -14,14 +14,14 @@ class SimpleUser(BaseModel):
     age: int
 
 
-def test_faux_simple():
+def test_faux_simple() -> None:
     user = faux(SimpleUser)
     assert isinstance(user, SimpleUser)
     assert isinstance(user.name, str)
     assert isinstance(user.age, int)
 
 
-def test_faux_simple_with_custom_values():
+def test_faux_simple_with_custom_values() -> None:
     custom_name = "John Doe"
     custom_age = 30
     user = faux(SimpleUser, name=custom_name, age=custom_age)
@@ -55,7 +55,7 @@ class User(BaseModel):
     optional_field: Optional[str] = None
 
 
-def test_faux_basic():
+def test_faux_basic() -> None:
     user = faux(User)
     assert isinstance(user, User)
     assert isinstance(user.name, str)
@@ -75,7 +75,7 @@ def test_faux_basic():
     assert user.optional_field is None or isinstance(user.optional_field, str)
 
 
-def test_faux_with_custom_values():
+def test_faux_with_custom_values() -> None:
     custom_name = "John Doe"
     custom_age = 30
     user = faux(User, name=custom_name, age=custom_age)
@@ -84,7 +84,7 @@ def test_faux_with_custom_values():
     assert isinstance(user.email, str)  # Other fields should still be fake
 
 
-def test_faux_dict():
+def test_faux_dict() -> None:
     model_dict = faux_dict(User)
     assert isinstance(model_dict, dict)
     assert "name" in model_dict
@@ -100,7 +100,7 @@ def test_faux_dict():
     assert "optional_field" in model_dict
 
 
-def test_faux_dict_with_custom_values():
+def test_faux_dict_with_custom_values() -> None:
     custom_values = {"name": "John Doe", "age": 30}
     model_dict = faux_dict(User, **custom_values)
     assert model_dict["name"] == "John Doe"

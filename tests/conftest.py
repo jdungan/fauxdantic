@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Type
 from uuid import UUID
 
 import pytest
@@ -34,15 +34,15 @@ class User(BaseModel):
 
 
 @pytest.fixture
-def user_model():
+def user_model() -> Type[User]:
     return User
 
 
 @pytest.fixture
-def address_model():
+def address_model() -> Type[Address]:
     return Address
 
 
 @pytest.fixture
-def user_role_enum():
+def user_role_enum() -> Type[UserRole]:
     return UserRole
