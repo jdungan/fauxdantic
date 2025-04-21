@@ -1,104 +1,109 @@
 import enum
 import random
 import uuid
-
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+from datetime import datetime, date
+from enum import Enum
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union, get_args, get_origin, Annotated
 
 from faker import Faker
 from pydantic import UUID4, BaseModel, StrictFloat
+from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
 
 
-fake = Faker()
+faker = Faker()
 
 
-def fake_value(field_type: Any, name: str) -> Any:
-    try:
+def _faux_value(field_type: Any, field_name: str = "") -> Any:
+    # Handle None or PydanticUndefined field types
+    if field_type is None or field_type is PydanticUndefined:
+        return faker.word()
+
+    # Handle Annotated types
+    if get_origin(field_type) is Annotated:
+        field_type = get_args(field_type)[0]
+
+    # Get the origin type (e.g., List from List[str])
+    origin = get_origin(field_type)
+    args = get_args(field_type)
+
+    # Handle Union types (including Optional)
+    if origin is Union:
+        # Filter out None for Optional types
+        types = [t for t in args if t is not type(None)]
+        if types:
+            return _faux_value(types[0], field_name)
+        return None
+
+    # Handle List types
+    if origin is list:
+        item_type = args[0] if args else Any
+        return [_faux_value(item_type, field_name) for _ in range(2)]
+
+    # Handle Dict types
+    if origin is dict:
+        key_type = args[0] if args else str
+        value_type = args[1] if len(args) > 1 else Any
+        return {
+            _faux_value(key_type, f"{field_name}_key"): _faux_value(value_type, f"{field_name}_value")
+            for _ in range(2)
+        }
+
+    # Handle basic types
+    if isinstance(field_type, type):
         if issubclass(field_type, BaseModel):
-            return make_dict(field_type)
-    except TypeError:
-        pass
-    outer_type = (
-        field_type.__origin__ if hasattr(field_type, "__origin__") else field_type
-    )
-    inner_type = (
-        field_type.__args__[0]
-        if hasattr(field_type, "__args__") and field_type.__args__
-        else None
-    )
+            return faux_dict(field_type)
+        elif issubclass(field_type, Enum):
+            return random.choice(list(field_type.__members__.values()))
+        elif field_type is str:
+            if "email" in field_name.lower():
+                return faker.email()
+            elif "name" in field_name.lower():
+                return faker.name()
+            return faker.word()
+        elif field_type is int:
+            return faker.random_int(min=0, max=100)
+        elif field_type is float:
+            return round(faker.random_float(min=0, max=100), 2)
+        elif field_type is bool:
+            return faker.boolean()
+        elif field_type is datetime:
+            return faker.date_time()
+        elif field_type is date:
+            return faker.date()
+        elif field_type is uuid.UUID:
+            return faker.uuid4()
 
-    if outer_type in [List, list]:
-        return [fake_value(inner_type, name) for _ in range(random.randint(1, 5))]
-    elif isinstance(field_type, enum.EnumMeta):
-        return random.choice([v.value for v in field_type.__members__.values()])
+    # Handle FieldInfo objects
+    if isinstance(field_type, FieldInfo):
+        return _faux_value(field_type.annotation, field_name)
 
-    if field_type == Any:
-        return "Any"
-    elif field_type == int:
-        return random.randint(2000, 2100)
-    elif field_type == str:
-        return fake.word()
-    elif field_type == bool:
-        return random.choice([True, False])
-    elif field_type == float or field_type == StrictFloat:
-        return random.uniform(0, 100)
-    elif field_type == uuid.UUID:
-        return str(uuid.uuid4())
-    elif field_type == UUID4:
-        return uuid.uuid4()
-    elif field_type == datetime:
-        return str(datetime.now())
-    elif field_type == Optional[str]:
-        return random.choice([None, fake.word()])
-    elif field_type == Optional[int]:
-        return random.choice([None, fake.pyint()])
-    elif field_type == Optional[datetime]:
-        return random.choice([None, str(datetime.now())])
-    elif field_type == Dict[int, str]:
-        fake_dict = {}
-        for _ in range(random.randint(1, 5)):
-            key = random.randint(1, 1000)
-            value = fake.word()
-            fake_dict[key] = value
-        return fake_dict
-    elif (
-        field_type == Dict
-        or field_type == Dict[str, Any]
-        or field_type == Dict[str, str]
-    ):
-        return {}
-    elif outer_type == Union:
-        inner_type = field_type.__args__[0]
-        if inner_type.__class__ == type(BaseModel):
-            return make_dict(inner_type)
-        else:
-            return fake_value(inner_type, name)
-    else:
-        raise ValueError(f"Unsupported type: name: {name}:  {field_type} ")
+    # Default fallback
+    return faker.word()
 
 
-def make_dict(model: Type[BaseModel], **kwargs) -> Dict:
-    model_values = dict()
+def faux_dict(model: Type[BaseModel], **kwargs) -> Dict:
+    model_values = {}
 
-    for name, field in model.__fields__.items():
+    for name, field in model.model_fields.items():
         if name in kwargs:
             model_values[name] = kwargs[name]
-        else:
-            field_type = field.outer_type_
-            field_default = field.default
-            field_default_factory = field.default_factory
+            continue
 
-            if field_default is not None:
-                model_values[name] = field_default
-            elif field_default_factory is not None:
-                model_values[name] = field_default_factory()
-            else:
-                model_values[name] = fake_value(field_type, name)
+        # For simple types, use the field type directly
+        field_type = field.annotation
+        if isinstance(field_type, type):
+            model_values[name] = _faux_value(field_type, name)
+            continue
+
+        # For more complex types (Union, List, etc.), use the field info
+        model_values[name] = _faux_value(field, name)
+
     return model_values
 
 
 Model = TypeVar("Model", bound=BaseModel)
 
 
-def fake_model(pydantic_model: Type[Model], **kwargs) -> Model:
-    return pydantic_model(**make_dict(pydantic_model, **kwargs)) 
+def faux(pydantic_model: Type[Model], **kwargs) -> Model:
+    return pydantic_model(**faux_dict(pydantic_model, **kwargs)) 

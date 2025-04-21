@@ -1,3 +1,3 @@
-from .core import fake_model, make_dict, fake_value
+from .core import faux, faux_dict
 
-__all__ = ["fake_model", "make_dict", "fake_value"] 
+__all__ = ["faux", "faux_dict"] 
