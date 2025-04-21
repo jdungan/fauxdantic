@@ -1,15 +1,25 @@
 import enum
 import random
 import uuid
-from datetime import datetime, date
+from datetime import date, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union, get_args, get_origin, Annotated
+from typing import (
+    Annotated,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+)
 
 from faker import Faker
 from pydantic import UUID4, BaseModel, StrictFloat
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined
-
 
 faker = Faker()
 
@@ -45,7 +55,9 @@ def _faux_value(field_type: Any, field_name: str = "") -> Any:
         key_type = args[0] if args else str
         value_type = args[1] if len(args) > 1 else Any
         return {
-            _faux_value(key_type, f"{field_name}_key"): _faux_value(value_type, f"{field_name}_value")
+            _faux_value(key_type, f"{field_name}_key"): _faux_value(
+                value_type, f"{field_name}_value"
+            )
             for _ in range(random.randint(1, 3))
         }
 
@@ -121,4 +133,4 @@ Model = TypeVar("Model", bound=BaseModel)
 
 
 def faux(pydantic_model: Type[Model], **kwargs) -> Model:
-    return pydantic_model(**faux_dict(pydantic_model, **kwargs)) 
+    return pydantic_model(**faux_dict(pydantic_model, **kwargs))

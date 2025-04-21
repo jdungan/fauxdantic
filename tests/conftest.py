@@ -45,4 +45,4 @@ def address_model():
 
 @pytest.fixture
 def user_role_enum():
-    return UserRole 
+    return UserRole

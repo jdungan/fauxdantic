@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 import pytest
-from pydantic import BaseModel, UUID4
+from pydantic import UUID4, BaseModel
 
 from fauxdantic import faux, faux_dict
 
@@ -67,7 +67,9 @@ def test_faux_basic():
     assert isinstance(user.tags, list)
     assert all(isinstance(tag, str) for tag in user.tags)
     assert isinstance(user.preferences, dict)
-    assert all(isinstance(k, str) and isinstance(v, str) for k, v in user.preferences.items())
+    assert all(
+        isinstance(k, str) and isinstance(v, str) for k, v in user.preferences.items()
+    )
     assert isinstance(user.created_at, datetime)
     assert isinstance(user.user_id, UUID)
     assert user.optional_field is None or isinstance(user.optional_field, str)
@@ -103,4 +105,4 @@ def test_faux_dict_with_custom_values():
     model_dict = faux_dict(User, **custom_values)
     assert model_dict["name"] == "John Doe"
     assert model_dict["age"] == 30
-    assert isinstance(model_dict["email"], str)  # Other fields should still be fake 
+    assert isinstance(model_dict["email"], str)  # Other fields should still be fake
