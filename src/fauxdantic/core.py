@@ -122,6 +122,25 @@ def _generate_constrained_string(field_name: str, constraints: Dict[str, Any]) -
         base_value = faker.city()
         if len(base_value) > max_length:
             base_value = faker.city()[:max_length]
+    elif (
+        "state" in field_name_lower
+        or "province" in field_name_lower
+        or "region" in field_name_lower
+    ):
+        # For state/province fields, use full state name or abbreviation based on max_length
+        if max_length <= 3:
+            base_value = faker.state_abbr()
+        else:
+            base_value = faker.state()
+            if len(base_value) > max_length:
+                base_value = faker.state_abbr()
+    elif "country" in field_name_lower:
+        base_value = faker.country()
+        if len(base_value) > max_length:
+            # If country name is too long, try country code
+            base_value = faker.country_code()
+            if len(base_value) > max_length:
+                base_value = faker.country()[:max_length]
     elif "zip" in field_name_lower or "postal" in field_name_lower:
         base_value = faker.postcode()
         if len(base_value) > max_length:
