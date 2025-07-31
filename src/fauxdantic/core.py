@@ -33,53 +33,42 @@ def _generate_unique_string(pattern: str, max_length: int) -> str:
 
     # Replace "<unique>" with a truly unique identifier
     if "<unique>" in pattern:
-        # Generate a unique identifier using multiple sources
-        timestamp = int(time.time() * 1000000)  # Microsecond precision
-        unique_id = uuid.uuid4().hex[:8]  # First 8 characters of UUID hex
-        unique_part = f"{timestamp}_{unique_id}"
+        # Calculate the base pattern (without <unique>)
+        base_pattern = pattern.replace("<unique>", "")
+
+        # If the base pattern is already longer than max_length, truncate it
+        if len(base_pattern) > max_length:
+            return base_pattern[:max_length]
+
+        # Calculate available space for unique part
+        available_length = max_length - len(base_pattern)
+
+        # Calculate timestamp and hash once for all strategies
+        timestamp = int(time.time() * 1000000)
+        timestamp_hash = hashlib.md5(str(timestamp).encode()).hexdigest()
+
+        # Choose strategy based on available space
+        if available_length >= 20:
+            # Use timestamp + UUID for maximum uniqueness
+            unique_id = uuid.uuid4().hex[:8]
+            unique_part = f"{timestamp}_{unique_id}"
+        elif available_length >= 12:
+            # Use 12 characters of hashed timestamp
+            unique_part = timestamp_hash[:12]
+        elif available_length >= 8:
+            # Use 8 characters of hashed timestamp
+            unique_part = timestamp_hash[:8]
+        elif available_length >= 6:
+            # Use 6 characters of hashed timestamp
+            unique_part = timestamp_hash[:6]
+        elif available_length > 0:
+            # Use whatever space is available
+            unique_part = timestamp_hash[:available_length]
+        else:
+            # If no space available, return just the base pattern
+            return base_pattern
 
         result = pattern.replace("<unique>", unique_part)
-
-        # Ensure we don't exceed max_length
-        if len(result) > max_length:
-            # If the result is too long, try with just UUID
-            unique_part = uuid.uuid4().hex[:8]
-            result = pattern.replace("<unique>", unique_part)
-
-            # If still too long, try with hashed timestamp using more characters
-            if len(result) > max_length:
-                # Calculate how much space we have for the unique part
-                base_pattern = pattern.replace("<unique>", "")
-                available_length = max_length - len(base_pattern)
-
-                if available_length >= 12:
-                    # Use 12 characters of hashed timestamp for better uniqueness
-                    timestamp_hash = hashlib.md5(str(timestamp).encode()).hexdigest()[
-                        :12
-                    ]
-                    result = pattern.replace("<unique>", timestamp_hash)
-                elif available_length >= 8:
-                    # Use 8 characters of hashed timestamp
-                    timestamp_hash = hashlib.md5(str(timestamp).encode()).hexdigest()[
-                        :8
-                    ]
-                    result = pattern.replace("<unique>", timestamp_hash)
-                elif available_length >= 6:
-                    # Use 6 characters of hashed timestamp
-                    timestamp_hash = hashlib.md5(str(timestamp).encode()).hexdigest()[
-                        :6
-                    ]
-                    result = pattern.replace("<unique>", timestamp_hash)
-                elif available_length > 0:
-                    # Use whatever space is available
-                    timestamp_hash = hashlib.md5(str(timestamp).encode()).hexdigest()[
-                        :available_length
-                    ]
-                    result = pattern.replace("<unique>", timestamp_hash)
-                else:
-                    # If even the base pattern is too long, truncate it
-                    result = pattern[:max_length]
-
         return result
 
     return pattern
