@@ -311,14 +311,14 @@ def test_unique_string_functionality() -> None:
         route_number: Optional[str] = Field(None, max_length=20)
 
     # Test unique string generation
-    bus1 = faux(MyBus, route_number="SW_unique")
-    bus2 = faux(MyBus, route_number="SW_unique")
-    bus3 = faux(MyBus, route_number="ROUTE_unique")
+    bus1 = faux(MyBus, route_number="SW<unique>")
+    bus2 = faux(MyBus, route_number="SW<unique>")
+    bus3 = faux(MyBus, route_number="ROUTE<unique>")
 
     # Check that values are unique and follow the expected pattern
-    assert bus1.route_number.startswith("SW_")
-    assert bus2.route_number.startswith("SW_")
-    assert bus3.route_number.startswith("ROUTE_")
+    assert bus1.route_number.startswith("SW")
+    assert bus2.route_number.startswith("SW")
+    assert bus3.route_number.startswith("ROUTE")
     assert bus1.route_number != bus2.route_number
     assert bus1.route_number != bus3.route_number
     assert bus2.route_number != bus3.route_number
@@ -328,15 +328,15 @@ def test_unique_string_functionality() -> None:
     assert bus4.route_number is None or isinstance(bus4.route_number, str)
 
     # Test with different patterns
-    bus5 = faux(MyBus, route_number="EXPRESS_unique")
-    bus6 = faux(MyBus, route_number="EXPRESS_unique")
+    bus5 = faux(MyBus, route_number="EXPRESS<unique>")
+    bus6 = faux(MyBus, route_number="EXPRESS<unique>")
 
-    assert bus5.route_number.startswith("EXPRESS_")
-    assert bus6.route_number.startswith("EXPRESS_")
+    assert bus5.route_number.startswith("EXPRESS")
+    assert bus6.route_number.startswith("EXPRESS")
     assert bus5.route_number != bus6.route_number
 
     # Test with constraints - very long pattern should be truncated
-    bus7 = faux(MyBus, route_number="VERY_LONG_ROUTE_NAME_unique")
+    bus7 = faux(MyBus, route_number="VERY_LONG_ROUTE_NAME<unique>")
     assert len(bus7.route_number) <= 20
     # The pattern is too long, so it gets truncated to just the base pattern
     assert bus7.route_number == "VERY_LONG_ROUTE_NAME"
