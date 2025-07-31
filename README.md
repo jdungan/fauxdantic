@@ -143,6 +143,46 @@ print(fake_dict)
 # Output: {'name': 'John Doe', 'age': 30, 'email': 'smith@example.com'}
 ```
 
+### Unique String Generation
+
+Fauxdantic supports generating truly unique string values using the `_unique` pattern. This is useful for creating unique identifiers, route numbers, or any field that requires uniqueness.
+
+```python
+from typing import Optional
+from pydantic import BaseModel, Field
+from fauxdantic import faux
+
+class Bus(BaseModel):
+    route_number: Optional[str] = Field(None, max_length=50)
+
+# Generate buses with unique route numbers
+bus1 = faux(Bus, route_number="SW_unique")
+bus2 = faux(Bus, route_number="SW_unique")
+bus3 = faux(Bus, route_number="EXPRESS_unique")
+
+print(bus1.route_number)  # SW_1753986564318970_793119f2
+print(bus2.route_number)  # SW_1753986564319017_f33460cc
+print(bus3.route_number)  # EXPRESS_1753986564319059_9f1de0da
+```
+
+#### Examples with Different Constraints
+
+```python
+class ShortBus(BaseModel):
+    route_number: Optional[str] = Field(None, max_length=10)
+
+class MediumBus(BaseModel):
+    route_number: Optional[str] = Field(None, max_length=15)
+
+class LongBus(BaseModel):
+    route_number: Optional[str] = Field(None, max_length=50)
+
+# Different constraint lengths
+short_bus = faux(ShortBus, route_number="SW_unique")    # SW_f2830b (9 chars)
+medium_bus = faux(MediumBus, route_number="SW_unique")  # SW_208936f1 (11 chars)
+long_bus = faux(LongBus, route_number="SW_unique")      # SW_1753986564318970_793119f2 (28 chars)
+```
+
 ### Enums
 
 ```python

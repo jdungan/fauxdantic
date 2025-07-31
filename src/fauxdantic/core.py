@@ -25,6 +25,66 @@ from pydantic_core import PydanticUndefined
 faker = Faker()
 
 
+def _generate_unique_string(pattern: str, max_length: int) -> str:
+    """Generate a unique string based on a pattern containing '_unique'"""
+    import time
+    import uuid
+    import hashlib
+
+    # Replace "_unique" with a truly unique identifier
+    if "_unique" in pattern:
+        # Generate a unique identifier using multiple sources
+        timestamp = int(time.time() * 1000000)  # Microsecond precision
+        unique_id = uuid.uuid4().hex[:8]  # First 8 characters of UUID hex
+        unique_part = f"{timestamp}_{unique_id}"
+
+        result = pattern.replace("_unique", f"_{unique_part}")
+
+        # Ensure we don't exceed max_length
+        if len(result) > max_length:
+            # If the result is too long, try with just UUID
+            unique_part = uuid.uuid4().hex[:8]
+            result = pattern.replace("_unique", f"_{unique_part}")
+
+            # If still too long, try with hashed timestamp using more characters
+            if len(result) > max_length:
+                # Calculate how much space we have for the unique part
+                base_pattern = pattern.replace("_unique", "_")
+                available_length = max_length - len(base_pattern)
+
+                if available_length >= 12:
+                    # Use 12 characters of hashed timestamp for better uniqueness
+                    timestamp_hash = hashlib.md5(str(timestamp).encode()).hexdigest()[
+                        :12
+                    ]
+                    result = pattern.replace("_unique", f"_{timestamp_hash}")
+                elif available_length >= 8:
+                    # Use 8 characters of hashed timestamp
+                    timestamp_hash = hashlib.md5(str(timestamp).encode()).hexdigest()[
+                        :8
+                    ]
+                    result = pattern.replace("_unique", f"_{timestamp_hash}")
+                elif available_length >= 6:
+                    # Use 6 characters of hashed timestamp
+                    timestamp_hash = hashlib.md5(str(timestamp).encode()).hexdigest()[
+                        :6
+                    ]
+                    result = pattern.replace("_unique", f"_{timestamp_hash}")
+                elif available_length > 0:
+                    # Use whatever space is available
+                    timestamp_hash = hashlib.md5(str(timestamp).encode()).hexdigest()[
+                        :available_length
+                    ]
+                    result = pattern.replace("_unique", f"_{timestamp_hash}")
+                else:
+                    # If even the base pattern is too long, truncate it
+                    result = pattern[:max_length]
+
+        return result
+
+    return pattern
+
+
 def _extract_field_constraints(field_info: FieldInfo) -> Dict[str, Any]:
     """Extract constraints from Pydantic FieldInfo"""
     constraints = {}
@@ -279,12 +339,24 @@ def _faux_value(
     return faker.word()
 
 
+def _process_unique_value(value: Any, field_info: FieldInfo = None) -> Any:
+    """Process a value to handle unique string patterns"""
+    if isinstance(value, str) and "_unique" in value:
+        constraints = {}
+        if field_info:
+            constraints = _extract_field_constraints(field_info)
+        max_length = constraints.get("max_length", 50)
+        return _generate_unique_string(value, max_length)
+    return value
+
+
 def faux_dict(model: Type[BaseModel], **kwargs: Any) -> Dict[str, Any]:
     model_values: Dict[str, Any] = {}
 
     for name, field_info in model.model_fields.items():
         if name in kwargs:
-            model_values[name] = kwargs[name]
+            # Process unique values in kwargs
+            model_values[name] = _process_unique_value(kwargs[name], field_info)
             continue
 
         # Pass both type and field info for constraint-aware generation
