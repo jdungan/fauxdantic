@@ -340,3 +340,178 @@ def test_unique_string_functionality() -> None:
     assert len(bus7.route_number) <= 20
     # The pattern is too long, so it gets truncated to just the base pattern
     assert bus7.route_number == "VERY_LONG_ROUTE_NAME"
+
+
+class ModelWithDatetimeUnions(BaseModel):
+    """Model to test datetime prioritization in Union types"""
+
+    # str comes first in union - should still generate datetime
+    start_date: Union[str, datetime, None] = None
+    # datetime comes first in union - should generate datetime
+    end_date: Union[datetime, str, None] = None
+    # Optional datetime - should generate datetime
+    completion_date: Optional[Union[str, datetime]] = None
+    # Plain string field for comparison
+    description: str = "test"
+
+
+def test_datetime_prioritization_in_unions() -> None:
+    """Test that datetime types are prioritized over str in Union types"""
+    data = faux_dict(ModelWithDatetimeUnions)
+
+    # All datetime fields should return actual datetime objects, not strings
+    assert isinstance(
+        data["start_date"], datetime
+    ), f"start_date should be datetime, got {type(data['start_date'])}: {data['start_date']}"
+    assert isinstance(
+        data["end_date"], datetime
+    ), f"end_date should be datetime, got {type(data['end_date'])}: {data['end_date']}"
+    assert isinstance(
+        data["completion_date"], datetime
+    ), f"completion_date should be datetime, got {type(data['completion_date'])}: {data['completion_date']}"
+
+    # String field should still be string
+    assert isinstance(
+        data["description"], str
+    ), f"description should be str, got {type(data['description'])}: {data['description']}"
+
+    # Generate multiple instances to ensure consistency
+    for _ in range(5):
+        data = faux_dict(ModelWithDatetimeUnions)
+        assert isinstance(data["start_date"], datetime)
+        assert isinstance(data["end_date"], datetime)
+        assert isinstance(data["completion_date"], datetime)
+
+
+class Priority(str, Enum):
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+class ComprehensiveUnionModel(BaseModel):
+    """Model to test comprehensive Union type prioritization"""
+
+    # Priority 1: Literal types (most specific)
+    literal_over_str: Union[str, Literal["A", "B", "C"]] = "A"
+    str_over_literal: Union[Literal["X", "Y"], str] = "X"  # Should pick Literal
+
+    # Priority 2: Enum types (domain-specific values)
+    enum_over_str: Union[str, Priority] = Priority.HIGH
+    str_over_enum: Union[Priority, str] = Priority.HIGH  # Should pick Enum
+
+    # Priority 3: datetime/date types (already tested above, but included for completeness)
+    datetime_over_str: Union[str, datetime] = None
+
+    # Priority 4: bool types (more specific than str)
+    bool_over_str: Union[str, bool] = True
+    str_over_bool: Union[bool, str] = True  # Should pick bool
+
+    # Priority 5: Numeric types (more specific than str)
+    int_over_str: Union[str, int] = 42
+    str_over_int: Union[int, str] = 42  # Should pick int
+    float_over_str: Union[str, float] = 3.14
+    str_over_float: Union[float, str] = 3.14  # Should pick float
+
+    # Priority 6: UUID types (structured data)
+    uuid_over_str: Union[str, UUID] = None
+    str_over_uuid: Union[UUID, str] = None  # Should pick UUID
+
+    # Complex combinations
+    literal_over_everything: Union[str, int, bool, Literal["priority"]] = (
+        "priority"  # Should pick Literal
+    )
+    enum_over_most: Union[str, int, bool, Priority] = Priority.LOW  # Should pick Enum
+    bool_over_numeric_and_str: Union[str, int, float, bool] = True  # Should pick bool
+    int_over_str_only: Union[str, int] = 123  # Should pick int
+
+
+def test_comprehensive_union_prioritization() -> None:
+    """Test comprehensive Union type prioritization across all scenarios"""
+    data = faux_dict(ComprehensiveUnionModel)
+
+    # Priority 1: Literal types should be chosen over str
+    assert data["literal_over_str"] in [
+        "A",
+        "B",
+        "C",
+    ], f"literal_over_str should be Literal value, got: {data['literal_over_str']}"
+    assert data["str_over_literal"] in [
+        "X",
+        "Y",
+    ], f"str_over_literal should be Literal value, got: {data['str_over_literal']}"
+
+    # Priority 2: Enum types should be chosen over str
+    assert isinstance(
+        data["enum_over_str"], Priority
+    ), f"enum_over_str should be Priority enum, got {type(data['enum_over_str'])}: {data['enum_over_str']}"
+    assert isinstance(
+        data["str_over_enum"], Priority
+    ), f"str_over_enum should be Priority enum, got {type(data['str_over_enum'])}: {data['str_over_enum']}"
+
+    # Priority 3: datetime types should be chosen over str
+    assert isinstance(
+        data["datetime_over_str"], datetime
+    ), f"datetime_over_str should be datetime, got {type(data['datetime_over_str'])}: {data['datetime_over_str']}"
+
+    # Priority 4: bool types should be chosen over str
+    assert isinstance(
+        data["bool_over_str"], bool
+    ), f"bool_over_str should be bool, got {type(data['bool_over_str'])}: {data['bool_over_str']}"
+    assert isinstance(
+        data["str_over_bool"], bool
+    ), f"str_over_bool should be bool, got {type(data['str_over_bool'])}: {data['str_over_bool']}"
+
+    # Priority 5: Numeric types should be chosen over str
+    assert isinstance(
+        data["int_over_str"], int
+    ), f"int_over_str should be int, got {type(data['int_over_str'])}: {data['int_over_str']}"
+    assert isinstance(
+        data["str_over_int"], int
+    ), f"str_over_int should be int, got {type(data['str_over_int'])}: {data['str_over_int']}"
+    assert isinstance(
+        data["float_over_str"], float
+    ), f"float_over_str should be float, got {type(data['float_over_str'])}: {data['float_over_str']}"
+    assert isinstance(
+        data["str_over_float"], float
+    ), f"str_over_float should be float, got {type(data['str_over_float'])}: {data['str_over_float']}"
+
+    # Priority 6: UUID types should be chosen over str
+    assert isinstance(
+        data["uuid_over_str"], UUID
+    ), f"uuid_over_str should be UUID, got {type(data['uuid_over_str'])}: {data['uuid_over_str']}"
+    assert isinstance(
+        data["str_over_uuid"], UUID
+    ), f"str_over_uuid should be UUID, got {type(data['str_over_uuid'])}: {data['str_over_uuid']}"
+
+    # Complex combinations - test prioritization hierarchy
+    assert (
+        data["literal_over_everything"] == "priority"
+    ), f"literal_over_everything should be 'priority', got: {data['literal_over_everything']}"
+    assert isinstance(
+        data["enum_over_most"], Priority
+    ), f"enum_over_most should be Priority enum, got {type(data['enum_over_most'])}: {data['enum_over_most']}"
+    assert isinstance(
+        data["bool_over_numeric_and_str"], bool
+    ), f"bool_over_numeric_and_str should be bool, got {type(data['bool_over_numeric_and_str'])}: {data['bool_over_numeric_and_str']}"
+    assert isinstance(
+        data["int_over_str_only"], int
+    ), f"int_over_str_only should be int, got {type(data['int_over_str_only'])}: {data['int_over_str_only']}"
+
+    # Test consistency across multiple generations
+    for _ in range(5):
+        data = faux_dict(ComprehensiveUnionModel)
+
+        # Key assertions for priority order
+        assert data["literal_over_str"] in ["A", "B", "C"]
+        assert data["str_over_literal"] in ["X", "Y"]
+        assert isinstance(data["enum_over_str"], Priority)
+        assert isinstance(data["str_over_enum"], Priority)
+        assert isinstance(data["bool_over_str"], bool)
+        assert isinstance(data["str_over_bool"], bool)
+        assert isinstance(data["int_over_str"], int)
+        assert isinstance(data["str_over_int"], int)
+        assert isinstance(data["float_over_str"], float)
+        assert isinstance(data["str_over_float"], float)
+        assert isinstance(data["uuid_over_str"], UUID)
+        assert isinstance(data["str_over_uuid"], UUID)
