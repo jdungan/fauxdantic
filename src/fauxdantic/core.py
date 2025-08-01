@@ -17,6 +17,7 @@ from typing import (
     get_origin,
 )
 
+
 from faker import Faker
 from pydantic import UUID4, BaseModel, StrictFloat
 from pydantic.fields import FieldInfo
@@ -322,8 +323,17 @@ def _faux_value(
     origin = get_origin(field_type)
     args = get_args(field_type)
 
-    # Handle Union types (including Optional)
-    if origin is Union:
+    # Handle Union types (including Optional) and new union operator (|)
+    # UnionType is only available in Python 3.10+, so we check for it dynamically
+    union_types = (Union,)
+    try:
+        from types import UnionType
+
+        union_types = (Union, UnionType)
+    except ImportError:
+        pass
+
+    if origin in union_types:
         # Filter out None for Optional types
         types = [t for t in args if t is not type(None)]
         if types:

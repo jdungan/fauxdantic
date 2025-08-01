@@ -515,3 +515,63 @@ def test_comprehensive_union_prioritization() -> None:
         assert isinstance(data["str_over_float"], float)
         assert isinstance(data["uuid_over_str"], UUID)
         assert isinstance(data["str_over_uuid"], UUID)
+
+
+class NewUnionSyntaxModel(BaseModel):
+    """Model to test the new Python 3.10+ union operator syntax (|)"""
+
+    # Test the new union operator syntax - using Union for Python 3.9 compatibility
+    datetime_or_none: Union[datetime, None] = None
+    none_or_datetime: Union[None, datetime] = None
+    str_or_datetime: Union[str, datetime] = None
+    datetime_or_str: Union[datetime, str] = None
+    bool_or_str: Union[bool, str] = True
+    int_or_str: Union[int, str] = 42
+    float_or_str: Union[float, str] = 3.14
+
+
+def test_new_union_operator_syntax() -> None:
+    """Test that Union types work correctly with our prioritization logic"""
+    data = faux_dict(NewUnionSyntaxModel)
+
+    # datetime | None should generate datetime objects, not strings
+    assert isinstance(
+        data["datetime_or_none"], datetime
+    ), f"datetime_or_none should be datetime, got {type(data['datetime_or_none'])}: {data['datetime_or_none']}"
+    assert isinstance(
+        data["none_or_datetime"], datetime
+    ), f"none_or_datetime should be datetime, got {type(data['none_or_datetime'])}: {data['none_or_datetime']}"
+
+    # str | datetime should prioritize datetime
+    assert isinstance(
+        data["str_or_datetime"], datetime
+    ), f"str_or_datetime should be datetime, got {type(data['str_or_datetime'])}: {data['str_or_datetime']}"
+    assert isinstance(
+        data["datetime_or_str"], datetime
+    ), f"datetime_or_str should be datetime, got {type(data['datetime_or_str'])}: {data['datetime_or_str']}"
+
+    # bool | str should prioritize bool
+    assert isinstance(
+        data["bool_or_str"], bool
+    ), f"bool_or_str should be bool, got {type(data['bool_or_str'])}: {data['bool_or_str']}"
+
+    # int | str should prioritize int
+    assert isinstance(
+        data["int_or_str"], int
+    ), f"int_or_str should be int, got {type(data['int_or_str'])}: {data['int_or_str']}"
+
+    # float | str should prioritize float
+    assert isinstance(
+        data["float_or_str"], float
+    ), f"float_or_str should be float, got {type(data['float_or_str'])}: {data['float_or_str']}"
+
+    # Test consistency across multiple generations
+    for _ in range(5):
+        data = faux_dict(NewUnionSyntaxModel)
+        assert isinstance(data["datetime_or_none"], datetime)
+        assert isinstance(data["none_or_datetime"], datetime)
+        assert isinstance(data["str_or_datetime"], datetime)
+        assert isinstance(data["datetime_or_str"], datetime)
+        assert isinstance(data["bool_or_str"], bool)
+        assert isinstance(data["int_or_str"], int)
+        assert isinstance(data["float_or_str"], float)
