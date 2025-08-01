@@ -575,3 +575,35 @@ def test_new_union_operator_syntax() -> None:
         assert isinstance(data["bool_or_str"], bool)
         assert isinstance(data["int_or_str"], int)
         assert isinstance(data["float_or_str"], float)
+
+
+class Python311PlusModel(BaseModel):
+    """Model to test Python 3.11+ typing features"""
+
+    # Test Union with new union operator syntax (Python 3.10+)
+    datetime_or_none: datetime | None = None
+    str_or_datetime: str | datetime = None
+    bool_or_str: bool | str = True
+
+
+def test_python_311_plus_features() -> None:
+    """Test Python 3.11+ typing features and new union operator syntax"""
+    data = faux_dict(Python311PlusModel)
+
+    # New union operator syntax should work correctly
+    assert isinstance(
+        data["datetime_or_none"], datetime
+    ), f"datetime_or_none should be datetime, got {type(data['datetime_or_none'])}: {data['datetime_or_none']}"
+    assert isinstance(
+        data["str_or_datetime"], datetime
+    ), f"str_or_datetime should be datetime, got {type(data['str_or_datetime'])}: {data['str_or_datetime']}"
+    assert isinstance(
+        data["bool_or_str"], bool
+    ), f"bool_or_str should be bool, got {type(data['bool_or_str'])}: {data['bool_or_str']}"
+
+    # Test consistency across multiple generations
+    for _ in range(3):
+        data = faux_dict(Python311PlusModel)
+        assert isinstance(data["datetime_or_none"], datetime)
+        assert isinstance(data["str_or_datetime"], datetime)
+        assert isinstance(data["bool_or_str"], bool)

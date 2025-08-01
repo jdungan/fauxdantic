@@ -324,12 +324,19 @@ def _faux_value(
     args = get_args(field_type)
 
     # Handle Union types (including Optional) and new union operator (|)
-    # UnionType is only available in Python 3.10+, so we check for it dynamically
+    # UnionType is available in Python 3.10+, TypeAliasType in Python 3.12+
     union_types = (Union,)
     try:
         from types import UnionType
 
         union_types = (Union, UnionType)
+    except ImportError:
+        pass
+
+    try:
+        from types import TypeAliasType
+
+        union_types = union_types + (TypeAliasType,)
     except ImportError:
         pass
 

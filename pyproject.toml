@@ -6,7 +6,7 @@ authors = [
     {name = "John A. Dungan", email = "johnadungan@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.11.3,<3.0.0",
     "faker>=37.1.0,<38.0.0"
@@ -42,7 +42,7 @@ repository = "https://github.com/jdungan/fauxdantic"
 documentation = "https://github.com/jdungan/fauxdantic#readme"
 
 [tool.poetry.dependencies]
-python = ">=3.9"
+python = ">=3.11"
 pydantic = "^2.11.3"
 faker = "^37.1.0"
 
@@ -55,7 +55,7 @@ mypy = "^1.15.0"
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py311']
 include = '\.pyi?$'
 
 [tool.isort]
@@ -64,7 +64,7 @@ multi_line_output = 3
 line_length = 88
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
