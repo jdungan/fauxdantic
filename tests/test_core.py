@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Literal, Union
+from typing import Dict, List, Literal, Optional, Union
 from uuid import UUID
 
 import pytest
@@ -282,8 +282,9 @@ def test_complex_model_constraints() -> None:
 
 def test_constraint_extraction() -> None:
     """Test that constraint extraction works correctly"""
-    from fauxdantic.core import _extract_field_constraints
     from pydantic import Field
+
+    from fauxdantic.core import _extract_field_constraints
 
     # Test string constraints
     field_info = Field(min_length=5, max_length=20)

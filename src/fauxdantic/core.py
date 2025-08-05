@@ -17,7 +17,6 @@ from typing import (
     get_origin,
 )
 
-
 from faker import Faker
 from pydantic import UUID4, BaseModel, StrictFloat
 from pydantic.fields import FieldInfo
@@ -28,9 +27,9 @@ faker = Faker()
 
 def _generate_unique_string(pattern: str, max_length: int) -> str:
     """Generate a unique string based on a pattern containing '<unique>'"""
+    import hashlib
     import time
     import uuid
-    import hashlib
 
     # Replace "<unique>" with a truly unique identifier
     if "<unique>" in pattern:
@@ -385,6 +384,44 @@ def _faux_value(
             return date.fromisoformat(faker.date())
         elif field_type is uuid.UUID or field_type is UUID4:
             return uuid.UUID(faker.uuid4())
+        elif field_type is dict:
+            # Handle plain dict type (without type parameters)
+            return {
+                _faux_value(str, f"{field_name}_key"): _faux_value(
+                    Any, f"{field_name}_value"
+                )
+                for _ in range(random.randint(1, 3))
+            }
+        elif field_type is list:
+            # Handle plain list type (without type parameters)
+            return [
+                _faux_value(Any, f"{field_name}_item")
+                for _ in range(random.randint(1, 3))
+            ]
+        elif field_type is tuple:
+            # Handle plain tuple type (without type parameters)
+            return tuple(
+                _faux_value(Any, f"{field_name}_item")
+                for _ in range(random.randint(1, 3))
+            )
+        elif field_type is set:
+            # Handle plain set type (without type parameters)
+            return {
+                _faux_value(Any, f"{field_name}_item")
+                for _ in range(random.randint(1, 3))
+            }
+        elif field_type is frozenset:
+            # Handle plain frozenset type (without type parameters)
+            return frozenset(
+                _faux_value(Any, f"{field_name}_item")
+                for _ in range(random.randint(1, 3))
+            )
+        elif field_type is bytes:
+            # Handle bytes type
+            return faker.binary(length=random.randint(10, 50))
+        elif field_type is complex:
+            # Handle complex type
+            return complex(faker.random_number(), faker.random_number())
 
     # Handle FieldInfo objects
     if isinstance(field_type, FieldInfo):
