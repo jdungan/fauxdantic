@@ -284,23 +284,23 @@ def test_constraint_extraction() -> None:
     """Test that constraint extraction works correctly"""
     from pydantic import Field
 
-    from fauxdantic.core import _extract_field_constraints
+    from fauxdantic.types.constraints import extract_field_constraints
 
     # Test string constraints
     field_info = Field(min_length=5, max_length=20)
-    constraints = _extract_field_constraints(field_info)
+    constraints = extract_field_constraints(field_info)
     assert constraints["min_length"] == 5
     assert constraints["max_length"] == 20
 
     # Test numeric constraints
     field_info = Field(ge=10, le=100)
-    constraints = _extract_field_constraints(field_info)
+    constraints = extract_field_constraints(field_info)
     assert constraints["min_value"] == 10
     assert constraints["max_value"] == 100
 
     # Test gt/lt constraints
     field_info = Field(gt=0, lt=50)
-    constraints = _extract_field_constraints(field_info)
+    constraints = extract_field_constraints(field_info)
     assert constraints["min_value"] == 1
     assert constraints["max_value"] == 49
 

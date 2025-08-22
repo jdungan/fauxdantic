@@ -1,15 +1,15 @@
 """Unique string pattern handling utilities."""
 
-from typing import Any, Dict
+import hashlib
+import time
+import uuid
+from typing import Any, Dict, Optional
 
 from pydantic.fields import FieldInfo
 
 
 def generate_unique_string(pattern: str, max_length: int) -> str:
     """Generate a unique string based on a pattern containing '<unique>'"""
-    import hashlib
-    import time
-    import uuid
 
     # Replace "<unique>" with a truly unique identifier
     if "<unique>" in pattern:
@@ -54,7 +54,7 @@ def generate_unique_string(pattern: str, max_length: int) -> str:
     return pattern
 
 
-def process_unique_value(value: Any, field_info: FieldInfo = None) -> Any:
+def process_unique_value(value: Any, field_info: Optional[FieldInfo] = None) -> Any:
     """Process a value to handle unique string patterns"""
     if isinstance(value, str) and "<unique>" in value:
         from ..types.constraints import extract_field_constraints
