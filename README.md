@@ -1,6 +1,6 @@
 # Fauxdantic
 
-A library for generating fake Pydantic models for testing. Fauxdantic makes it easy to create realistic test data for your Pydantic models.  Pairs well with testing of fastapi endpoints.
+Generate realistic fake data for Pydantic models. Fauxdantic automatically creates test data that respects your model's structure, field types, and constraints.
 
 ## Installation
 
@@ -8,52 +8,191 @@ A library for generating fake Pydantic models for testing. Fauxdantic makes it e
 poetry add fauxdantic
 ```
 
-## Features
-
-- Generate fake data for any Pydantic model
-- Support for nested models
-- Support for common Python types:
-  - Basic types (str, int, float, bool)
-  - Optional types
-  - Lists
-  - Dicts
-  - UUIDs
-  - Datetimes
-  - Enums
-- Customizable values through keyword arguments
-- Generate dictionaries of fake data without creating model instances
-
-## Usage
-
-### Basic Usage
+## Quick Start
 
 ```python
 from pydantic import BaseModel
-from fauxdantic import faux, faux_dict
+from fauxdantic import faux
 
 class User(BaseModel):
     name: str
-    age: int
     email: str
-    is_active: bool
+    age: int
 
-# Generate a fake user
+# Generate a fake user instance
 fake_user = faux(User)
-print(fake_user)
-# Output: name='Smith' age=2045 email='smith@example.com' is_active=True
-
-# Generate a dictionary of fake values
-fake_dict = faux_dict(User)
-print(fake_dict)
-# Output: {'name': 'Smith', 'age': 2045, 'email': 'smith@example.com', 'is_active': True}
+# User(name='Jennifer Wilson', email='wilson@example.com', age=42)
 ```
+
+## Features
+
+- **Smart field detection** - Recognizes email, phone, address, and other common fields
+- **Constraint-aware** - Respects string lengths, number ranges, and other Pydantic constraints  
+- **Zero configuration** - Works immediately with any Pydantic model
+- **Nested models** - Handles complex model hierarchies
+- **Custom values** - Override specific fields while generating others
+- **Deterministic testing** - Seedable for reproducible test data
+- **Clear error messages** - Helpful feedback when things go wrong
+
+## Basic Usage
+
+### Generate Model Instances
+
+```python
+from fauxdantic import faux
+
+fake_user = faux(User)
+# Returns a User instance with generated data
+```
+
+### Generate Dictionaries  
+
+```python
+from fauxdantic import faux_dict
+
+fake_data = faux_dict(User)
+# Returns: {'name': 'John Doe', 'email': 'doe@example.com', 'age': 28}
+```
+
+### Override Specific Fields
+
+```python
+fake_user = faux(User, name="Alice", age=30)
+# User(name='Alice', email='generated@example.com', age=30)
+```
+
+## Smart Field Detection
+
+Fauxdantic recognizes field names and generates appropriate data:
+
+```python
+class Contact(BaseModel):
+    email: str          # Generates valid email addresses
+    phone: str          # Generates phone numbers  
+    website: str        # Generates URLs
+    street: str         # Generates street addresses
+    city: str           # Generates city names
+    state: str          # Generates state names/abbreviations
+    zip_code: str       # Generates postal codes
+    description: str    # Generates longer text (50+ chars)
+
+contact = faux(Contact)
+# All fields get contextually appropriate fake data
+```
+
+## FastAPI Testing
+
+Fauxdantic pairs well with FastAPI endpoint testing:
+
+```python
+from fastapi.testclient import TestClient
+
+@app.post("/users", response_model=User)
+def create_user(user: User):
+    return user
+
+def test_create_user():
+    # Generate realistic test data
+    user_data = faux_dict(User)
+    
+    response = client.post("/users", json=user_data)
+    assert response.status_code == 200
+    assert response.json()["email"] == user_data["email"]
+```
+
+## Advanced Features
+
+### Constraint Support
+
+Fauxdantic respects Pydantic Field constraints:
+
+```python
+from pydantic import Field
+
+class Product(BaseModel):
+    name: str = Field(min_length=5, max_length=50)
+    price: float = Field(gt=0, le=1000)
+    category: str = Field(max_length=20)
+
+product = faux(Product)
+# Generated data respects all constraints
+```
+
+### Configuration
+
+Configure generation behavior globally:
+
+```python
+from fauxdantic import config
+
+# Set collection size ranges
+config.set_collection_size_range(2, 5)  # Lists/dicts will have 2-5 items
+
+# Deterministic generation for tests
+config.set_seed(42)
+
+# Change faker locale
+config.set_locale('ja_JP')
+```
+
+### Unique String Generation
+
+Generate unique identifiers with the `<unique>` pattern:
+
+```python
+class Order(BaseModel):
+    order_id: str = Field(max_length=20)
+
+# Generate unique order IDs
+order1 = faux(Order, order_id="ORD<unique>")
+order2 = faux(Order, order_id="ORD<unique>") 
+# order1.order_id: "ORD1734567890_a1b2c3"
+# order2.order_id: "ORD1734567891_d4e5f6"
+```
+
+### Error Handling
+
+Fauxdantic provides clear error messages:
+
+```python
+# Invalid field names are caught
+try:
+    faux(User, invalid_field="test")
+except InvalidKwargsError as e:
+    print(e)
+    # Invalid field(s) for User: invalid_field
+    # Valid fields: name, email, age
+
+# Unsupported types get helpful suggestions  
+from typing import Callable
+
+class BadModel(BaseModel):
+    callback: Callable[[int], str]
+
+try:
+    faux(BadModel)
+except UnsupportedTypeError as e:
+    print(e)
+    # Unsupported type 'Callable' for field 'callback'
+    # Suggestions: Functions/callables are not supported
+```
+
+## Supported Types
+
+- **Basic types**: `str`, `int`, `float`, `bool`
+- **Temporal**: `datetime`, `date`
+- **Identifiers**: `UUID`, Pydantic `UUID4`
+- **Collections**: `List[T]`, `Dict[K,V]`, `Set[T]`, `Tuple`
+- **Optional**: `Optional[T]`, `Union[T, None]`
+- **Enums**: All enum types
+- **Nested models**: Other Pydantic models
+- **Literals**: `Literal["option1", "option2"]`
+
+## Examples
 
 ### Nested Models
 
 ```python
-from pydantic import BaseModel
-from fauxdantic import faux, faux_dict
-
 class Address(BaseModel):
     street: str
     city: str
@@ -61,153 +200,42 @@ class Address(BaseModel):
 
 class User(BaseModel):
     name: str
-    age: int
-    address: Address
-
-# Generate a fake user with nested address
-fake_user = faux(User)
-print(fake_user)
-# Output: name='Smith' age=2045 address=Address(street='123 Main St', city='Anytown', zip_code='12345')
-
-# Generate a dictionary with nested address
-fake_dict = faux_dict(User)
-print(fake_dict)
-# Output: {'name': 'Smith', 'age': 2045, 'address': {'street': '123 Main St', 'city': 'Anytown', 'zip_code': '12345'}}
-```
-
-### Optional Fields
-
-```python
-from typing import Optional
-from pydantic import BaseModel
-from fauxdantic import faux, faux_dict
-
-class User(BaseModel):
-    name: str
-    age: Optional[int]
-    email: Optional[str]
-
-# Generate a fake user with optional fields
-fake_user = faux(User)
-print(fake_user)
-# Output: name='Smith' age=None email='smith@example.com'
-
-# Generate a dictionary with optional fields
-fake_dict = faux_dict(User)
-print(fake_dict)
-# Output: {'name': 'Smith', 'age': None, 'email': 'smith@example.com'}
-```
-
-### Lists and Dicts
-
-```python
-from typing import List, Dict
-from pydantic import BaseModel
-from fauxdantic import faux, faux_dict
-
-class User(BaseModel):
-    name: str
-    tags: List[str]
-    preferences: Dict[str, str]
-
-# Generate a fake user with lists and dicts
-fake_user = faux(User)
-print(fake_user)
-# Output: name='Smith' tags=['tag1', 'tag2'] preferences={'key1': 'value1', 'key2': 'value2'}
-
-# Generate a dictionary with lists and dicts
-fake_dict = faux_dict(User)
-print(fake_dict)
-# Output: {'name': 'Smith', 'tags': ['tag1', 'tag2'], 'preferences': {'key1': 'value1', 'key2': 'value2'}}
-```
-
-### Custom Values
-
-```python
-from pydantic import BaseModel
-from fauxdantic import faux, faux_dict
-
-class User(BaseModel):
-    name: str
-    age: int
     email: str
+    address: Address
+    tags: List[str]
 
-# Generate a fake user with custom values
-fake_user = faux(User, name="John Doe", age=30)
-print(fake_user)
-# Output: name='John Doe' age=30 email='smith@example.com'
-
-# Generate a dictionary with custom values
-fake_dict = faux_dict(User, name="John Doe", age=30)
-print(fake_dict)
-# Output: {'name': 'John Doe', 'age': 30, 'email': 'smith@example.com'}
+user = faux(User)
+# Generates realistic data for all nested fields
 ```
 
-### Unique String Generation
-
-Fauxdantic supports generating truly unique string values using the `<unique>` pattern. This is useful for creating unique identifiers, route numbers, or any field that requires uniqueness.
+### Complex Collections
 
 ```python
-from typing import Optional
-from pydantic import BaseModel, Field
-from fauxdantic import faux
+class Order(BaseModel):
+    items: List[Dict[str, Union[str, int]]]
+    metadata: Dict[str, Any]
 
-class Bus(BaseModel):
-    route_number: Optional[str] = Field(None, max_length=50)
-
-# Generate buses with unique route numbers
-bus1 = faux(Bus, route_number="SW<unique>")
-bus2 = faux(Bus, route_number="SW<unique>")
-bus3 = faux(Bus, route_number="EXPRESS<unique>")
-
-print(bus1.route_number)  # SW1753986564318970_793119f2
-print(bus2.route_number)  # SW1753986564319017_f33460cc
-print(bus3.route_number)  # EXPRESS1753986564319059_9f1de0da
+order = faux(Order)
+# Generates appropriate nested structures
 ```
 
-#### Examples with Different Constraints
+### Testing with Factories
 
 ```python
-class ShortBus(BaseModel):
-    route_number: Optional[str] = Field(None, max_length=10)
+def user_factory(**kwargs):
+    """Factory function for consistent test users."""
+    defaults = {
+        "name": "Test User",
+        "email": "test@example.com"
+    }
+    defaults.update(kwargs)
+    return faux(User, **defaults)
 
-class MediumBus(BaseModel):
-    route_number: Optional[str] = Field(None, max_length=15)
-
-class LongBus(BaseModel):
-    route_number: Optional[str] = Field(None, max_length=50)
-
-# Different constraint lengths
-short_bus = faux(ShortBus, route_number="SW<unique>")    # SWf2830b (9 chars)
-medium_bus = faux(MediumBus, route_number="SW<unique>")  # SW208936f1 (11 chars)
-long_bus = faux(LongBus, route_number="SW<unique>")      # SW1753986564318970_793119f2 (28 chars)
-```
-
-### Enums
-
-```python
-from enum import Enum
-from pydantic import BaseModel
-from fauxdantic import faux, faux_dict
-
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    USER = "user"
-    GUEST = "guest"
-
-class User(BaseModel):
-    name: str
-    role: UserRole
-
-# Generate a fake user with enum
-fake_user = faux(User)
-print(fake_user)
-# Output: name='Smith' role=<UserRole.ADMIN: 'admin'>
-
-# Generate a dictionary with enum
-fake_dict = faux_dict(User)
-print(fake_dict)
-# Output: {'name': 'Smith', 'role': 'admin'}
+# Use in tests
+def test_user_creation():
+    user = user_factory(age=25)
+    assert user.age == 25
+    assert "@" in user.email
 ```
 
 ## Development
@@ -219,12 +247,15 @@ poetry install
 # Run tests
 poetry run pytest
 
+# Run tests with coverage
+poetry run pytest --cov=src/fauxdantic
+
 # Format code
 poetry run black .
 poetry run isort .
 
 # Type checking
-poetry run mypy .
+poetry run mypy src/fauxdantic
 ```
 
 ## Contributing
@@ -233,4 +264,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
