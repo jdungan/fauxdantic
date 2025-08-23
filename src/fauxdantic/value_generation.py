@@ -4,13 +4,7 @@ import random
 import uuid
 from datetime import date, datetime
 from enum import Enum
-from typing import (
-    Annotated,
-    Any,
-    Optional,
-    get_args,
-    get_origin,
-)
+from typing import Annotated, Any, Optional, get_args, get_origin
 
 from pydantic import UUID4, BaseModel
 from pydantic.fields import FieldInfo
@@ -82,7 +76,10 @@ def _faux_value_internal(
     # Handle List types
     if origin is list:
         item_type = args[0] if args else Any
-        return [_faux_value_internal(item_type, field_name) for _ in range(get_random_collection_size())]
+        return [
+            _faux_value_internal(item_type, field_name)
+            for _ in range(get_random_collection_size())
+        ]
 
     # Handle Dict types
     if origin is dict:
@@ -100,6 +97,7 @@ def _faux_value_internal(
         if issubclass(field_type, BaseModel):
             # Import here to avoid circular import
             from .core import faux_dict
+
             return faux_dict(field_type)
         elif issubclass(field_type, Enum):
             return random.choice(list(field_type))
@@ -162,24 +160,28 @@ def _faux_value_internal(
 
     # Check for common unsupported types and provide helpful suggestions
     suggestions = []
-    type_name = getattr(field_type, '__name__', str(field_type))
-    
+    type_name = getattr(field_type, "__name__", str(field_type))
+
     # Provide suggestions for common mistakes
-    if hasattr(field_type, '__module__'):
+    if hasattr(field_type, "__module__"):
         module_name = field_type.__module__
-        if 'numpy' in module_name:
-            suggestions.append("Use Python built-in types (int, float) instead of numpy types")
-        elif 'pandas' in module_name:
+        if "numpy" in module_name:
+            suggestions.append(
+                "Use Python built-in types (int, float) instead of numpy types"
+            )
+        elif "pandas" in module_name:
             suggestions.append("Use Python built-in types or Pydantic types instead")
-        elif 'typing' in module_name:
+        elif "typing" in module_name:
             suggestions.append("Check if you're using a supported typing construct")
-    
-    if 'function' in type_name.lower() or 'callable' in type_name.lower():
-        suggestions.append("Functions/callables are not supported for fake data generation")
-    
+
+    if "function" in type_name.lower() or "callable" in type_name.lower():
+        suggestions.append(
+            "Functions/callables are not supported for fake data generation"
+        )
+
     # For unknown types, try a graceful fallback first
-    if hasattr(field_type, '__name__') and field_type.__name__ in ['object', 'Any']:
+    if hasattr(field_type, "__name__") and field_type.__name__ in ["object", "Any"]:
         return get_faker().word()  # Graceful fallback for generic types
-    
+
     # If we can't handle it, raise an informative error
     raise UnsupportedTypeError(field_type, field_name, suggestions)

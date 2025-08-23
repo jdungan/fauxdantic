@@ -44,7 +44,7 @@ def generate_constrained_string(field_name: str, constraints: Dict[str, Any]) ->
         if not constraints or "max_length" not in constraints:
             # No explicit constraints, generate longer description text
             max_length = 120  # Override default for descriptions
-            min_length = 50   # Ensure description is reasonably long
+            min_length = 50  # Ensure description is reasonably long
             base_value = get_faker().text(max_nb_chars=120)
         else:
             # Has explicit max_length constraint

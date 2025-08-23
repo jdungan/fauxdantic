@@ -13,11 +13,11 @@ def _validate_kwargs(model: Type[BaseModel], kwargs: Dict[str, Any]) -> None:
     """Validate that all kwargs correspond to actual model fields."""
     if not kwargs:
         return
-        
+
     model_fields = set(model.model_fields.keys())
     provided_fields = set(kwargs.keys())
     invalid_fields = provided_fields - model_fields
-    
+
     if invalid_fields:
         valid_fields = list(model_fields)
         raise InvalidKwargsError(invalid_fields, model.__name__, valid_fields)
@@ -27,7 +27,7 @@ def faux_dict(model: Type[BaseModel], **kwargs: Any) -> Dict[str, Any]:
     """Generate a dictionary of fake values for a Pydantic model."""
     # Validate kwargs against model fields
     _validate_kwargs(model, kwargs)
-    
+
     model_values: Dict[str, Any] = {}
 
     for name, field_info in model.model_fields.items():

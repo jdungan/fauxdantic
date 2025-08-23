@@ -27,7 +27,7 @@ fake_user = faux(User)
 ## Features
 
 - **Smart field detection** - Recognizes email, phone, address, and other common fields
-- **Constraint-aware** - Respects string lengths, number ranges, and other Pydantic constraints  
+- **Constraint-aware** - Respects string lengths, number ranges, and other Pydantic constraints
 - **Zero configuration** - Works immediately with any Pydantic model
 - **Nested models** - Handles complex model hierarchies
 - **Custom values** - Override specific fields while generating others
@@ -45,7 +45,7 @@ fake_user = faux(User)
 # Returns a User instance with generated data
 ```
 
-### Generate Dictionaries  
+### Generate Dictionaries
 
 ```python
 from fauxdantic import faux_dict
@@ -68,7 +68,7 @@ Fauxdantic recognizes field names and generates appropriate data:
 ```python
 class Contact(BaseModel):
     email: str          # Generates valid email addresses
-    phone: str          # Generates phone numbers  
+    phone: str          # Generates phone numbers
     website: str        # Generates URLs
     street: str         # Generates street addresses
     city: str           # Generates city names
@@ -94,7 +94,7 @@ def create_user(user: User):
 def test_create_user():
     # Generate realistic test data
     user_data = faux_dict(User)
-    
+
     response = client.post("/users", json=user_data)
     assert response.status_code == 200
     assert response.json()["email"] == user_data["email"]
@@ -145,7 +145,7 @@ class Order(BaseModel):
 
 # Generate unique order IDs
 order1 = faux(Order, order_id="ORD<unique>")
-order2 = faux(Order, order_id="ORD<unique>") 
+order2 = faux(Order, order_id="ORD<unique>")
 # order1.order_id: "ORD1734567890_a1b2c3"
 # order2.order_id: "ORD1734567891_d4e5f6"
 ```
@@ -163,7 +163,7 @@ except InvalidKwargsError as e:
     # Invalid field(s) for User: invalid_field
     # Valid fields: name, email, age
 
-# Unsupported types get helpful suggestions  
+# Unsupported types get helpful suggestions
 from typing import Callable
 
 class BadModel(BaseModel):

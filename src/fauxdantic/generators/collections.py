@@ -9,7 +9,10 @@ def generate_list(
     item_type: Any, field_name: str, faux_value_func: Callable[[Any, str], Any]
 ) -> List[Any]:
     """Generate a list with random items of the specified type"""
-    return [faux_value_func(item_type, field_name) for _ in range(get_random_collection_size())]
+    return [
+        faux_value_func(item_type, field_name)
+        for _ in range(get_random_collection_size())
+    ]
 
 
 def generate_dict(

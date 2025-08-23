@@ -4,17 +4,7 @@ import random
 import uuid
 from datetime import date, datetime
 from enum import Enum
-from typing import (
-    Any,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Type,
-    Union,
-    get_args,
-    get_origin,
-)
+from typing import Any, Dict, List, Literal, Optional, Type, Union, get_args, get_origin
 
 from pydantic import UUID4
 
@@ -79,12 +69,14 @@ def get_union_types() -> tuple:
     union_types: tuple = (Union,)
     try:
         from types import UnionType
+
         union_types = (Union, UnionType)
     except ImportError:
         pass
 
     try:
         from types import TypeAliasType  # type: ignore[attr-defined]
+
         union_types = union_types + (TypeAliasType,)
     except ImportError:
         pass
